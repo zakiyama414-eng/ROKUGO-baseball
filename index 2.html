@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="ja"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#132238"><title>六郷高校 Baseball Analyzer</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f6f8;color:#17202b;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;padding-bottom:78px}
+header{background:#132238;color:#fff;padding:16px;position:sticky;top:0;z-index:5}header h1{margin:0;font-size:19px}header small{opacity:.75}
+main{max-width:760px;margin:auto;padding:12px}.page{display:none}.page.active{display:block}.card{background:#fff;border-radius:15px;padding:15px;margin-bottom:12px;box-shadow:0 2px 9px #0000000a}
+h2{font-size:16px;margin:0 0 11px}.sub,.hint{font-size:12px;color:#687384}.row,.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}select,input,button{font:inherit;border-radius:10px;border:1px solid #d9dfe7;padding:11px;background:#fff;width:100%}button{font-weight:700}.primary{background:#132238;color:#fff;border-color:#132238}.danger{background:#8e2020;color:#fff;border:0}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.grid button{min-height:50px;background:#f5f7f9}.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}.kpi{background:#f5f7f9;border-radius:11px;padding:9px}.kpi b{display:block;font-size:19px;margin-top:3px}
+table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:8px 4px;border-bottom:1px solid #edf0f3;text-align:right}th:first-child,td:first-child{text-align:left}
+.notice{font-size:12px;background:#f5f7f9;padding:10px;border-radius:10px;color:#5f6b7a}.pill{display:inline-block;padding:4px 7px;border-radius:99px;background:#eef1f5;font-size:11px;margin:2px}
+nav{position:fixed;bottom:0;left:0;right:0;height:72px;background:#fff;border-top:1px solid #dfe4ea;display:flex;z-index:10;padding-bottom:env(safe-area-inset-bottom)}nav button{border:0;background:#fff;color:#697586;font-size:11px}nav button.active{color:#132238}nav span{display:block;font-size:21px;margin-bottom:3px}
+.field{position:relative;width:100%;aspect-ratio:1;background:linear-gradient(135deg,#e8f0e4,#f5f0df);border:1px solid #cad5c5;border-radius:50%;overflow:hidden}.diamond{position:absolute;width:42%;aspect-ratio:1;left:29%;top:29%;border:2px solid #9b825c;transform:rotate(45deg)}.zone{position:absolute;width:27%;height:27%;left:36.5%;top:36.5%;border:2px dashed #777;background:#ffffff55}.tap{position:absolute;width:30px;height:30px;border-radius:50%;background:#132238;color:#fff;border:2px solid #fff;transform:translate(-50%,-50%);font-size:10px}
+.chart{height:145px;display:flex;align-items:end;gap:8px;padding:8px 4px}.col{flex:1;text-align:center;font-size:10px;color:#687384}.barwrap{height:100px;display:flex;align-items:end;justify-content:center}.bar{width:28px;background:#132238;border-radius:6px 6px 2px 2px}
+@media(max-width:520px){.kpis{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:repeat(2,1fr)}.row,.two{grid-template-columns:1fr 1fr}}
+
+/* V5 iPhone + iPad responsive */
+@media (min-width:768px){
+#v4app{max-width:none;min-height:100vh;background:#eef2f6}
+#v4app .top{padding:16px 24px}
+#v4app nav{max-width:900px;margin:12px auto 0}
+#v4app section{max-width:1440px;margin:auto;padding:16px}
+#v4app section.on{display:grid;grid-template-columns:minmax(430px,1.05fr) minmax(400px,.95fr);gap:14px;align-items:start}
+#v4app section.on>.card{margin-bottom:0}
+#v4live .card:first-child,#v4stats .card:first-child{grid-column:1/-1}
+#v4app .score b{font-size:42px}
+#v4app .metric .num{font-size:28px}
+#v4app button{min-height:48px;font-size:15px}
+#v4app input,#v4app select{min-height:48px}
+}
+@media (min-width:1100px){
+#v4app section.on{grid-template-columns:1.15fr .85fr}
+#v4stats{grid-template-columns:repeat(2,1fr)!important}
+}
+@media (orientation:landscape) and (max-width:767px){
+#v4app section.on{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+}
+</style></head>
+<body>
+<header><h1>⚾ 六郷高校 Baseball Analyzer</h1><small>試合入力・集計・統計・攻撃作戦の実戦効果</small></header>
+<main>
+<section id="input" class="page active">
+<div class="card"><h2>試合・選手</h2><div class="row"><select id="game"><option>練習試合 vs 対戦校</option><option>公式戦</option></select><select id="player"></select></div></div>
+
+<div class="card"><h2>試合状況</h2><div class="two">
+<select id="inning"><option>1回</option><option>2回</option><option>3回</option><option>4回</option><option>5回</option><option>6回</option><option>7回</option><option>8回</option><option>9回</option></select>
+<select id="runner"><option>走者なし</option><option>一塁</option><option>二塁</option><option>三塁</option><option>一・二塁</option><option>一・三塁</option><option>二・三塁</option><option>満塁</option></select>
+</div><div style="height:8px"></div><div class="two">
+<select id="count"><option>0-0</option><option>0-1</option><option>0-2</option><option>1-0</option><option>1-1</option><option>1-2</option><option>2-0</option><option>2-1</option><option>2-2</option><option>3-0</option><option>3-1</option><option>3-2</option></select>
+<select id="hand"><option>右投手</option><option>左投手</option></select>
+</div></div>
+
+<div class="card"><h2>打席結果</h2><div class="grid">
+<button onclick="hit('1B')">単打</button><button onclick="hit('2B')">二塁打</button><button onclick="hit('3B')">三塁打</button><button onclick="hit('HR')">本塁打</button>
+<button onclick="hit('BB')">四球</button><button onclick="hit('HBP')">死球</button><button onclick="hit('K')">三振</button><button onclick="hit('OUT')">凡打</button><button onclick="hit('SAC')">犠打</button>
+</div></div>
+
+<div class="card"><h2>打球方向</h2><div id="field" class="field" onclick="tapField(event)"><div class="diamond"></div><div class="zone"></div></div><p class="hint">打球位置をタップして記録</p></div>
+
+<div class="card"><h2>⚔️ 攻撃作戦</h2><div class="two">
+<select id="strategy"><option value="">作戦を選択</option><option>送りバント</option><option>セーフティバント</option><option>盗塁</option><option>エンドラン</option><option>スクイズ</option><option>進塁打狙い</option><option>ヒットエンドラン</option><option>バスター</option></select>
+<select id="strategyResult"><option value="">作戦結果</option><option>成功</option><option>失敗</option><option>一部成功</option><option>判断保留</option></select>
+</div><div style="height:8px"></div><div class="two">
+<select id="strategyRunOutcome"><option>作戦後：まだ得点なし</option><option>作戦後：得点につながった</option><option>作戦後：複数得点につながった</option><option>作戦後：失点・流れ悪化</option></select>
+<select id="strategyReason"><option>目的：進塁</option><option>目的：得点</option><option>目的：走者を動かす</option><option>目的：相手守備を動かす</option><option>目的：次打者を有利にする</option></select>
+</div><div style="height:8px"></div><button class="primary" onclick="recordStrategy()">作戦を記録</button></div>
+
+<div class="card"><h2>🏃 得点・失点</h2><div class="two"><button class="primary" onclick="recordRun(1)">＋1得点</button><button onclick="recordRun(2)">＋2得点</button></div><div style="height:8px"></div><div class="two"><button onclick="recordRun(3)">＋3得点</button><button onclick="recordRun(4)">＋4得点</button></div><div style="height:8px"></div><button class="danger" onclick="recordRun(-1)">失点を記録</button></div>
+
+<div class="card"><h2>投球</h2><div class="two"><select id="pitchType"><option>ストレート</option><option>スライダー</option><option>カーブ</option><option>チェンジアップ</option><option>変化球</option></select><input id="speed" type="number" placeholder="球速 km/h"></div><div style="height:8px"></div><div class="two"><button onclick="pitch('S')">ストライク</button><button onclick="pitch('B')">ボール</button></div></div>
+</section>
+
+<section id="summary" class="page">
+<div class="card"><h2>② 集計</h2><div class="kpis"><div class="kpi">打率<b id="avg">.000</b></div><div class="kpi">出塁率<b id="obp">.000</b></div><div class="kpi">OPS<b id="ops">.000</b></div><div class="kpi">打席<b id="pa">0</b></div></div></div>
+<div class="card"><h2>⚔️ 攻撃作戦</h2><div class="kpis"><div class="kpi">作戦数<b id="strategyCount">0</b></div><div class="kpi">成功率<b id="strategyRate">.000</b></div><div class="kpi">得点化率<b id="strategyRunRate">.000</b></div><div class="kpi">平均得点<b id="strategyAvgRuns">0.0</b></div></div><div style="height:10px"></div><table><thead><tr><th>作戦</th><th>試行</th><th>成功</th><th>失敗</th><th>成功率</th><th>得点化率</th><th>平均得点</th></tr></thead><tbody id="strategyTable"></tbody></table></div>
+<div class="card"><h2>選手別打撃</h2><table><thead><tr><th>選手</th><th>PA</th><th>AB</th><th>H</th><th>BB</th><th>AVG</th></tr></thead><tbody id="batTable"></tbody></table></div>
+<div class="card"><h2>投手集計</h2><div class="kpis"><div class="kpi">投球数<b id="pitches">0</b></div><div class="kpi">S率<b id="strikeRate">.000</b></div><div class="kpi">平均球速<b id="avgSpeed">-</b></div><div class="kpi">最高球速<b id="maxSpeed">-</b></div></div></div>
+<div class="card"><h2>記録一覧</h2><div id="log" class="notice">まだありません</div></div>
+</section>
+
+<section id="stats" class="page">
+<div class="card"><h2>③ 統計・分析</h2><p class="sub">作戦を「成功したか」だけでなく「得点につながったか」まで分析</p></div>
+<div class="card"><h2>⚔️ 作戦の実戦効果</h2><div id="strategyEffectiveness" class="notice">データを入力してください。</div><div style="height:10px"></div><table><thead><tr><th>作戦</th><th>成功</th><th>得点化</th><th>得点化率</th><th>平均得点</th></tr></thead><tbody id="strategyEffectTable"></tbody></table></div>
+<div class="card"><h2>作戦の詳細</h2><div id="strategyAnalysis" class="notice"></div></div>
+<div class="card"><h2>打球方向分布</h2><div class="chart" id="hitChart"></div></div>
+<div class="card"><h2>選手別詳細</h2><div id="playerDetails"></div></div>
+<div class="card"><h2>監督向け試合レポート</h2><div id="coachReport" class="notice"></div></div>
+</section>
+
+<section id="settings" class="page">
+<div class="card"><h2>④ 選手・データ</h2><input id="newPlayer" placeholder="選手名"><div style="height:8px"></div><button class="primary" onclick="addPlayer()">選手を追加</button></div>
+<div class="card"><button onclick="exportData()">データを書き出す</button><div style="height:8px"></div><button class="danger" onclick="resetAll()">全データ削除</button></div>
+</section>
+</main>
+
+<nav><button class="active" onclick="page('input',this)"><span>📝</span>入力</button><button onclick="page('summary',this)"><span>📋</span>集計</button><button onclick="page('stats',this)"><span>📊</span>統計</button><button onclick="page('settings',this)"><span>⚙️</span>設定</button></nav>
+
+<script>
+let players=["1番 山田","2番 佐藤","3番 鈴木","4番 高橋"],bat={},events=[],pitches=[],strategies=[],runs=[];
+players.forEach(p=>bat[p]={pa:0,ab:0,h:0,bb:0,hbp:0,tb:0});
+
+const rate=(a,b)=>b?(a/b).toFixed(3).replace(/^0/,''):'.000';
+const ctx=()=>({inning:document.getElementById('inning').value,runner:document.getElementById('runner').value,count:document.getElementById('count').value,hand:document.getElementById('hand').value});
+const isHit=e=>['1B','2B','3B','HR'].includes(e.type);
+
+function hit(type){
+ const p=document.getElementById('player').value,d=bat[p],c=ctx(),ab=!['BB','HBP','SAC'].includes(type);
+ d.pa++;if(ab)d.ab++;if(type==='SAC'){d.pa--;d.ab--}
+ if(isHit({type})){d.h++;d.tb+=({1B:1,2B:2,3B:3,HR:4}[type]||0)}
+ if(type==='BB')d.bb++;if(type==='HBP')d.hbp++;
+ events.unshift({time:new Date().toLocaleTimeString(),p,type,...c});render();toast(type+'を記録');
+}
+function tapField(e){
+ const r=e.currentTarget.getBoundingClientRect(),x=((e.clientX-r.left)/r.width*100).toFixed(1),y=((e.clientY-r.top)/r.height*100).toFixed(1);
+ const dot=document.createElement('div');dot.className='tap';dot.style.left=x+'%';dot.style.top=y+'%';dot.textContent='●';e.currentTarget.appendChild(dot);
+ events.unshift({time:new Date().toLocaleTimeString(),p:document.getElementById('player').value,type:'打球位置',x,y,...ctx()});render();
+}
+function recordStrategy(){
+ const strategy=document.getElementById('strategy').value,result=document.getElementById('strategyResult').value;
+ if(!strategy||!result){alert('作戦と結果を選択してください');return}
+ const c=ctx(),s={time:new Date().toLocaleTimeString(),strategy,result,reason:document.getElementById('strategyReason').value,runOutcome:document.getElementById('strategyRunOutcome').value,runLinked:false,runs:0,...c};
+ strategies.unshift(s);events.unshift({time:s.time,p:'作戦',type:strategy+'：'+result,...c});render();toast(strategy+'を記録');
+}
+function recordRun(value){
+ const c=ctx(),r={time:new Date().toLocaleTimeString(),value,...c};runs.unshift(r);events.unshift({time:r.time,p:'得点',type:value>0?'得点 +'+value:'失点',...c});
+ // Link to most recent unlinked strategy in the same inning.
+ const s=strategies.find(x=>x.inning===c.inning&&!x.runLinked);
+ if(s){s.runLinked=true;s.runs=value>0?value:0;s.runOutcome=value>0?(value>=2?'作戦後：複数得点につながった':'作戦後：得点につながった'):'作戦後：失点・流れ悪化'}
+ render();toast(value>0?'得点 '+value:'失点');
+}
+function pitch(type){
+ const c=ctx(),pt=document.getElementById('pitchType').value,sp=Number(document.getElementById('speed').value)||null;
+ pitches.push({type,pitch:pt,speed:sp,...c});events.unshift({time:new Date().toLocaleTimeString(),p:'投球',type:pt+' '+type+(sp?' '+sp+'km/h':''),...c});render();
+}
+function render(){
+ const P=Object.values(bat),pa=P.reduce((s,d)=>s+d.pa,0),ab=P.reduce((s,d)=>s+d.ab,0),h=P.reduce((s,d)=>s+d.h,0),bb=P.reduce((s,d)=>s+d.bb,0),hbp=P.reduce((s,d)=>s+d.hbp,0),tb=P.reduce((s,d)=>s+d.tb,0);
+ const avg=rate(h,ab),obp=rate(h+bb+hbp,ab+bb+hbp),slg=rate(tb,ab);
+ document.getElementById('avg').textContent=avg;document.getElementById('obp').textContent=obp;document.getElementById('ops').textContent=(Number(obp)+Number(slg)).toFixed(3);document.getElementById('pa').textContent=pa;
+ document.getElementById('batTable').innerHTML=players.map(p=>{let d=bat[p];return `<tr><td>${p}</td><td>${d.pa}</td><td>${d.ab}</td><td>${d.h}</td><td>${d.bb}</td><td>${rate(d.h,d.ab)}</td></tr>`}).join('');
+
+ const smap={};
+ strategies.forEach(s=>{const d=smap[s.strategy]??={trial:0,success:0,fail:0,partial:0,runCount:0,runs:0};d.trial++;if(s.result==='成功')d.success++;if(s.result==='失敗')d.fail++;if(s.result==='一部成功')d.partial++;if(s.runLinked&&s.runs>0){d.runCount++;d.runs+=s.runs}});
+ const total=strategies.length,success=strategies.filter(s=>s.result==='成功').length,scored=strategies.filter(s=>s.result==='成功'&&s.runLinked&&s.runs>0).length,totalRuns=strategies.reduce((n,s)=>n+(s.runs||0),0);
+ document.getElementById('strategyCount').textContent=total;document.getElementById('strategyRate').textContent=rate(success,Math.max(1,total));document.getElementById('strategyRunRate').textContent=rate(scored,Math.max(1,success));document.getElementById('strategyAvgRuns').textContent=scored?(totalRuns/scored).toFixed(1):'0.0';
+ const names=Object.keys(smap);
+ document.getElementById('strategyTable').innerHTML=names.map(n=>{let d=smap[n];return `<tr><td>${n}</td><td>${d.trial}</td><td>${d.success}</td><td>${d.fail}</td><td>${rate(d.success,d.trial)}</td><td>${rate(d.runCount,Math.max(1,d.success))}</td><td>${d.runCount?(d.runs/d.runCount).toFixed(1):'0.0'}</td></tr>`}).join('')||'<tr><td colspan="7">データなし</td></tr>';
+ document.getElementById('strategyEffectTable').innerHTML=names.map(n=>{let d=smap[n];return `<tr><td>${n}</td><td>${d.success}</td><td>${d.runCount}</td><td>${rate(d.runCount,Math.max(1,d.success))}</td><td>${d.runCount?(d.runs/d.runCount).toFixed(1):'0.0'}</td></tr>`}).join('')||'<tr><td colspan="5">データなし</td></tr>';
+ document.getElementById('strategyEffectiveness').textContent=`作戦成功後の得点化率は ${rate(scored,Math.max(1,success))}。成功した作戦が実際の得点につながったかを評価します。平均得点は ${scored?(totalRuns/scored).toFixed(1):'0.0'} 点。`;
+ document.getElementById('strategyAnalysis').textContent=total?`作戦 ${total}回、成功 ${success}回、成功後の得点化 ${scored}回。得点化率と作戦成功率を分けて確認できます。`:'作戦データを入力してください。';
+
+ const speeds=pitches.map(x=>x.speed).filter(Boolean),st=pitches.filter(x=>x.type==='S').length;
+ document.getElementById('pitches').textContent=pitches.length;document.getElementById('strikeRate').textContent=rate(st,pitches.length);document.getElementById('avgSpeed').textContent=speeds.length?(speeds.reduce((a,b)=>a+b,0)/speeds.length).toFixed(1):'-';document.getElementById('maxSpeed').textContent=speeds.length?Math.max(...speeds):'-';
+ document.getElementById('log').innerHTML=events.slice(0,20).map(e=>`<span class="pill">${e.time} ${e.p} ${e.type}</span>`).join('')||'まだありません';
+
+ const hitEvents=events.filter(isHit),counts=players.map(p=>hitEvents.filter(e=>e.p===p).length),mx=Math.max(1,...counts);
+ document.getElementById('hitChart').innerHTML=players.map((p,i)=>`<div class="col"><div class="barwrap"><div class="bar" style="height:${15+counts[i]/mx*85}px"></div></div>${p}<br>${counts[i]}H</div>`).join('');
+ document.getElementById('playerDetails').innerHTML=players.map(p=>{let d=bat[p];return `<div class="notice" style="margin-bottom:7px"><b>${p}</b><br>AVG ${rate(d.h,d.ab)} / H ${d.h} / BB ${d.bb} / AB ${d.ab} / SLG ${rate(d.tb,d.ab)}</div>`}).join('');
+ document.getElementById('coachReport').textContent=total?`作戦 ${total}回。成功率 ${rate(success,total)}、成功後得点化率 ${rate(scored,Math.max(1,success))}。作戦を「成功したか」と「得点につながったか」の2段階で評価できます。`:'データを入力すると試合後レポートを生成します。';
+}
+function page(id,btn){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));if(btn)btn.classList.add('active');scrollTo(0,0)}
+function addPlayer(){const n=document.getElementById('newPlayer').value.trim();if(!n)return;players.push(n);bat[n]={pa:0,ab:0,h:0,bb:0,hbp:0,tb:0};document.getElementById('player').innerHTML=players.map(p=>`<option>${p}</option>`).join('');document.getElementById('newPlayer').value='';render()}
+function exportData(){const blob=new Blob([JSON.stringify({players,bat,events,pitches,strategies,runs},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='rokugo-baseball-data.json';a.click()}
+function resetAll(){if(confirm('全データを削除しますか？')){players=["1番 山田","2番 佐藤","3番 鈴木","4番 高橋"];bat={};players.forEach(p=>bat[p]={pa:0,ab:0,h:0,bb:0,hbp:0,tb:0});events=[];pitches=[];strategies=[];runs=[];document.getElementById('player').innerHTML=players.map(p=>`<option>${p}</option>`).join('');document.querySelectorAll('#field .tap').forEach(x=>x.remove());render()}}
+function toast(t){const e=document.createElement('div');e.textContent=t;e.style.cssText='position:fixed;left:50%;bottom:88px;transform:translateX(-50%);background:#132238;color:#fff;padding:9px 14px;border-radius:99px;font-size:12px;z-index:30';document.body.appendChild(e);setTimeout(()=>e.remove(),1100)}
+document.getElementById('player').innerHTML=players.map(p=>`<option>${p}</option>`).join('');render();
+</script>
+<style>
+#v4app{font-family:-apple-system,BlinkMacSystemFont,sans-serif;max-width:760px;margin:auto;background:#f4f6f8;color:#18212b;padding-bottom:30px}
+#v4app .top{position:sticky;top:0;z-index:20;background:#132238;color:#fff;padding:12px}
+#v4app nav{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-top:9px}
+#v4app nav button,#v4app button{border:0;border-radius:11px;padding:11px 6px;font-weight:800}
+#v4app nav button{background:#ffffff22;color:#fff;font-size:11px} #v4app nav button.on{background:#fff;color:#132238}
+#v4app section{display:none;padding:10px} #v4app section.on{display:block}
+#v4app .card{background:#fff;border:1px solid #dde3e9;border-radius:15px;padding:11px;margin-bottom:9px}
+#v4app .score{display:grid;grid-template-columns:1fr 50px 50px 1fr;text-align:center;align-items:center}
+#v4app .score b{font-size:30px} #v4app .grid2{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+#v4app .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+#v4app .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+#v4app input,#v4app select{width:100%;padding:10px;border:1px solid #ccd4dd;border-radius:10px;background:#fff;font-size:16px}
+#v4app .wide{width:100%;background:#132238;color:#fff}.good{background:#e2f5e8}.bad{background:#fde7e7}.warn{background:#fff0d0}
+#v4app .metric{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center}
+#v4app .metric div{background:#f3f6f8;border-radius:10px;padding:7px}.num{font-size:21px;font-weight:900}
+#v4app .log{font-size:12px;padding:7px 0;border-bottom:1px solid #e8ecf0}
+</style>
+<div id="v4app">
+<div class="top"><b style="font-size:20px">⚾ 六郷高校 Baseball Analyzer</b><div style="font-size:11px;opacity:.8">V5｜iPhone ＋ iPad 完全対応・リアルタイム試合記録</div>
+<nav><button class="on" onclick="v4Page('live',this)">LIVE</button><button onclick="v4Page('bat',this)">打撃</button><button onclick="v4Page('pit',this)">投手</button><button onclick="v4Page('plan',this)">作戦</button><button onclick="v4Page('stats',this)">分析</button></nav></div>
+
+<section id="v4live" class="on"><div class="card"><div class="score"><div>六郷<br><b id="vh">0</b></div><div id="vi">1回</div><div id="vhalf">表</div><div>対戦校<br><b id="va">0</b></div></div><div style="height:7px"></div><div class="grid4"><button class="good" onclick="v4Score(1)">＋得点</button><button class="bad" onclick="v4Score(-1)">＋失点</button><button onclick="v4Inning()">次の回</button><button onclick="v4Undo()">↩取消</button></div></div>
+<div class="card"><b>走者状況</b><div style="height:7px"></div><div class="grid4"><button onclick="v4Base('なし')">なし</button><button onclick="v4Base('一塁')">一塁</button><button onclick="v4Base('二塁')">二塁</button><button onclick="v4Base('三塁')">三塁</button></div><div style="height:6px"></div><div class="grid4"><button onclick="v4Base('一二塁')">一二塁</button><button onclick="v4Base('一三塁')">一三塁</button><button onclick="v4Base('二三塁')">二三塁</button><button class="warn" onclick="v4Base('満塁')">満塁</button></div><div id="vb" style="margin-top:7px;font-weight:800">走者なし</div></div>
+<div class="card"><b>打席結果</b><input id="vname" placeholder="打者名（例：1番 山田）" style="margin:8px 0"><div class="grid3"><button class="good" onclick="v4Bat('単打')">単打</button><button class="good" onclick="v4Bat('二塁打')">二塁打</button><button class="good" onclick="v4Bat('三塁打')">三塁打</button></div><div style="height:6px"></div><div class="grid4"><button class="good" onclick="v4Bat('本塁打')">本塁打</button><button onclick="v4Bat('四球')">四球</button><button onclick="v4Bat('犠打成功')">犠打</button><button class="bad" onclick="v4Bat('三振')">三振</button></div><div style="height:6px"></div><div class="grid4"><button onclick="v4Bat('凡打')">凡打</button><button onclick="v4Bat('死球')">死球</button><button onclick="v4Bat('犠飛')">犠飛</button><button onclick="v4Bat('犠打失敗')">犠打失敗</button></div></div>
+<div class="card"><b>直近プレー</b><div id="vlog">まだありません</div></div></section>
+
+<section id="v4bat"><div class="card"><b>詳細打席</b><div class="grid3"><input id="db" placeholder="打者"><input id="do" type="number" placeholder="打順"><input id="di" type="number" value="1" placeholder="回"></div><div style="height:6px"></div><div class="grid3"><select id="dr"><option>単打</option><option>二塁打</option><option>三塁打</option><option>本塁打</option><option>四球</option><option>死球</option><option>三振</option><option>凡打</option><option>犠打成功</option><option>犠打失敗</option><option>犠飛</option></select><input id="dc" placeholder="カウント"><select id="dd"><option>中</option><option>左</option><option>左中間</option><option>右中間</option><option>右</option><option>内野</option></select></div><div style="height:6px"></div><button class="wide" onclick="v4DetailBat()">詳細記録</button></div><div class="card"><b>選手別</b><div id="vbatstats">データなし</div></div></section>
+
+<section id="v4pit"><div class="card"><b>投球記録</b><div class="grid2"><input id="vpitcher" placeholder="投手"><select id="vtype"><option>直球</option><option>ツーシーム</option><option>スライダー</option><option>カーブ</option><option>チェンジアップ</option><option>フォーク</option></select></div><div style="height:7px"></div><div class="grid4"><button onclick="v4Pitch('ストライク')">ストライク</button><button onclick="v4Pitch('ボール')">ボール</button><button onclick="v4Pitch('空振り')">空振り</button><button onclick="v4Pitch('ファウル')">ファウル</button></div><div style="height:6px"></div><div class="grid3"><button onclick="v4Pitch('インプレー')">インプレー</button><button class="bad" onclick="v4Pitch('安打')">被安打</button><button class="warn" onclick="v4Pitch('失投')">失投</button></div></div><div class="card"><b>投手別</b><div id="vpstats">データなし</div></div></section>
+
+<section id="v4plan"><div class="card"><b>攻撃作戦</b><div class="grid4"><button onclick="v4Plan('送りバント')">送りバント</button><button onclick="v4Plan('盗塁')">盗塁</button><button onclick="v4Plan('エンドラン')">エンドラン</button><button onclick="v4Plan('スクイズ')">スクイズ</button></div><div style="height:6px"></div><div class="grid3"><button onclick="v4Plan('H&R')">H&R</button><button onclick="v4Plan('進塁打')">進塁打</button><button onclick="v4Plan('待球')">待球</button></div></div><div class="card"><b>作戦成績</b><div id="vplstats">データなし</div></div></section>
+
+<section id="v4stats"><div class="card"><b>主要指標</b><div class="metric"><div>打率<div id="avg" class="num">.000</div></div><div>連打率<div id="streak" class="num">0.0%</div></div><div>被連打率<div id="against" class="num">0.0%</div></div></div><div style="height:6px"></div><div class="metric"><div>作戦成功率<div id="ps" class="num">0.0%</div></div><div>得点化率<div id="psc" class="num">0.0%</div></div><div>成功後平均得点<div id="pavg" class="num">0.00</div></div></div></div><div class="card"><b>イニング別</b><div id="innings">データなし</div></div><div class="card"><b>カウント別</b><div id="counts">詳細入力で表示</div></div><div class="card"><b>球種別</b><div id="types">データなし</div></div><div class="card"><b>バックアップ</b><div class="grid2"><button onclick="v4JSON()">JSON書き出し</button><button onclick="v4CSV()">CSV書き出し</button></div></div></section>
+</div>
+<script>
+const V4K="rokugoBaseballV4";let V4S=JSON.parse(localStorage.getItem(V4K)||"null")||{home:0,away:0,inning:1,half:"表",base:"なし",bats:[],pitches:[],plans:[],history:[]};const V4H=["単打","二塁打","三塁打","本塁打"];
+function v4save(){localStorage.setItem(V4K,JSON.stringify(V4S));v4render()}function v4snap(){V4S.history.push(JSON.stringify({...V4S,history:[]}))}
+function v4Page(x,b){document.querySelectorAll("#v4app section").forEach(e=>e.classList.remove("on"));document.getElementById("v4"+x).classList.add("on");document.querySelectorAll("#v4app nav button").forEach(e=>e.classList.remove("on"));b.classList.add("on");v4render()}
+function v4Score(n){v4snap();n>0?V4S.home++:V4S.away++;v4save()}function v4Inning(){v4snap();if(V4S.half==="表")V4S.half="裏";else{V4S.half="表";V4S.inning++}v4save()}function v4Undo(){if(V4S.history.length)V4S=JSON.parse(V4S.history.pop());v4save()}function v4Base(x){V4S.base=x;v4save()}
+function v4Bat(r){v4snap();V4S.bats.push({player:vname.value||"未入力",result:r,inning:V4S.inning,half:V4S.half,base:V4S.base,t:Date.now()});vname.value="";v4save()}
+function v4DetailBat(){v4snap();V4S.bats.push({player:db.value||"未入力",result:dr.value,inning:+di.value||V4S.inning,count:dc.value,dir:dd.value,base:V4S.base,t:Date.now()});v4save();alert("詳細打席を記録しました")}
+function v4Pitch(r){V4S.pitches.push({pitcher:vpitcher.value||"未入力",type:vtype.value,result:r,inning:V4S.inning,half:V4S.half,t:Date.now()});v4save()}
+function v4Plan(p){let ok=confirm(p+"\\n\\nOK＝成功　キャンセル＝失敗");let runs=ok?Number(prompt("作戦後の得点","0")||0):0;V4S.plans.push({plan:p,result:ok?"成功":"失敗",runs,inning:V4S.inning,t:Date.now()});v4save()}
+function v4Metrics(){let ab=V4S.bats.filter(x=>!["四球","死球","犠打成功","犠飛"].includes(x.result)),h=V4S.bats.filter(x=>V4H.includes(x.result)),pair=0;for(let i=1;i<V4S.bats.length;i++)if(V4H.includes(V4S.bats[i-1].result)&&V4H.includes(V4S.bats[i].result))pair++;let ph=V4S.pitches.filter(x=>x.result==="安打"),pp=0;for(let i=1;i<ph.length;i++)if(ph[i].pitcher===ph[i-1].pitcher&&ph[i].inning===ph[i-1].inning)pp++;let ok=V4S.plans.filter(x=>x.result==="成功"),sc=ok.filter(x=>x.runs>0);return{avg:h.length/(ab.length||1),streak:pair/((V4S.bats.length-1)||1),against:pp/((ph.length-1)||1),ps:ok.length/(V4S.plans.length||1),psc:sc.length/(ok.length||1),pavg:ok.reduce((a,x)=>a+x.runs,0)/(ok.length||1)}}
+function v4render(){vh.textContent=V4S.home;va.textContent=V4S.away;vi.textContent=V4S.inning+"回";vhalf.textContent=V4S.half;vb.textContent=V4S.base==="なし"?"走者なし":V4S.base+"に走者";let m=v4Metrics();avg.textContent=m.avg.toFixed(3).replace("0.",".");streak.textContent=(m.streak*100).toFixed(1)+"%";against.textContent=(m.against*100).toFixed(1)+"%";ps.textContent=(m.ps*100).toFixed(1)+"%";psc.textContent=(m.psc*100).toFixed(1)+"%";pavg.textContent=m.pavg.toFixed(2);
+let logs=[...V4S.bats.map(x=>"打席："+x.player+" "+x.result),...V4S.pitches.map(x=>"投球："+x.pitcher+" "+x.type+" "+x.result),...V4S.plans.map(x=>"作戦："+x.plan+" "+x.result)].slice(-8).reverse();vlog.innerHTML=logs.map(x=>'<div class="log">'+x+"</div>").join("")||"まだありません";
+let bm={};V4S.bats.forEach(x=>{bm[x.player]??={a:0,h:0};if(!["四球","死球","犠打成功","犠飛"].includes(x.result))bm[x.player].a++;if(V4H.includes(x.result))bm[x.player].h++});vbatstats.innerHTML=Object.entries(bm).map(([k,v])=>'<div class="log"><b>'+k+"</b> 打数"+v.a+" 安打"+v.h+" 打率"+(v.h/(v.a||1)).toFixed(3)+"</div>").join("")||"データなし";
+let pm={};V4S.pitches.forEach(x=>{pm[x.pitcher]??={n:0,h:0};pm[x.pitcher].n++;if(x.result==="安打")pm[x.pitcher].h++});vpstats.innerHTML=Object.entries(pm).map(([k,v])=>'<div class="log"><b>'+k+"</b> "+v.n+"球 被安打"+v.h+"</div>").join("")||"データなし";
+let pl={};V4S.plans.forEach(x=>{pl[x.plan]??={n:0,s:0,r:0};pl[x.plan].n++;if(x.result==="成功"){pl[x.plan].s++;pl[x.plan].r+=x.runs}});vplstats.innerHTML=Object.entries(pl).map(([k,v])=>'<div class="log"><b>'+k+"</b> 成功率"+(v.s/v.n*100).toFixed(1)+"% / 平均得点"+(v.r/(v.s||1)).toFixed(2)+"</div>").join("")||"データなし";
+let inn={};V4S.bats.forEach(x=>{inn[x.inning]??={a:0,h:0};if(!["四球","死球","犠打成功","犠飛"].includes(x.result))inn[x.inning].a++;if(V4H.includes(x.result))inn[x.inning].h++});innings.innerHTML=Object.entries(inn).map(([k,v])=>'<div class="log">'+k+"回　安打"+v.h+" 打数"+v.a+" 打率"+(v.h/(v.a||1)).toFixed(3)+"</div>").join("")||"データなし";
+let co={};V4S.bats.filter(x=>x.count).forEach(x=>{co[x.count]??={n:0,h:0};co[x.count].n++;if(V4H.includes(x.result))co[x.count].h++});counts.innerHTML=Object.entries(co).map(([k,v])=>'<div class="log">'+k+"　"+v.n+"打席 / 安打"+v.h+" / 打率"+(v.h/v.n).toFixed(3)+"</div>").join("")||"詳細入力で表示";
+let ty={};V4S.pitches.forEach(x=>{ty[x.type]??={n:0,h:0};ty[x.type].n++;if(x.result==="安打")ty[x.type].h++});types.innerHTML=Object.entries(ty).map(([k,v])=>'<div class="log"><b>'+k+"</b> "+v.n+"球 / 被安打"+v.h+"</div>").join("")||"データなし"}
+function v4DL(blob,name){let a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;a.click()}function v4JSON(){v4DL(new Blob([JSON.stringify(V4S,null,2)],{type:"application/json"}),"rokugo-baseball-v4-backup.json")}function v4CSV(){let r=[["種別","対象","結果","回","表裏","走者","カウント","球種","作戦","得点"],...V4S.bats.map(x=>["打席",x.player,x.result,x.inning,x.half,x.base,x.count||"","","",""]),...V4S.pitches.map(x=>["投球",x.pitcher,x.result,x.inning,x.half,"","",x.type,"",""]),...V4S.plans.map(x=>["作戦",x.plan,x.result,x.inning,"","","","",x.plan,x.runs])];v4DL(new Blob(["\ufeff"+r.map(a=>a.map(v=>'"'+String(v??"").replaceAll('"','""')+'"').join(",")).join("\n")],{type:"text/csv"}),"rokugo-baseball-v4.csv")}v4render();
+</script>
+</body></html>
