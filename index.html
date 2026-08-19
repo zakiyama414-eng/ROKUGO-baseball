@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#10233f">
+<title>六郷高校 Baseball Analyzer V7</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#eef2f6;color:#152238;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif;padding-bottom:88px}
+header{background:#10233f;color:#fff;padding:24px 18px}header h1{margin:0;font-size:27px}header p{margin:4px 0;color:#d5deea}
+main{max-width:1250px;margin:auto;padding:14px}.page{display:none}.page.active{display:block}.card{background:#fff;border-radius:20px;padding:17px;margin-bottom:14px;box-shadow:0 2px 14px #0001}
+h2{margin:0 0 13px;font-size:21px}.grid,.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+label{display:block;font-size:12px;font-weight:800;color:#667085;margin-bottom:4px}input,select{width:100%;height:48px;border:2px solid #d9e0e9;border-radius:13px;padding:0 10px;background:#fff}
+.topbar{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.metric{background:#f5f7fa;border-radius:14px;padding:10px;text-align:center}.metric small{display:block;color:#667085}.metric b{font-size:23px}
+.record-layout{display:grid;gap:14px}.pitchgrid,.outcomegrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.pitch,.outcome{min-height:63px;border:2px solid #d7dfe9;border-radius:14px;background:#f8fafc;font-weight:800;color:#0878df}.outcome{color:#152238}
+.strategygrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.strategy{padding:11px;border:1px solid #cfd8e4;border-radius:13px;background:#fff;font-weight:800}
+.live,.notice{margin-top:10px;padding:10px;border-radius:12px;background:#eef6ff;color:#24527a;font-weight:800}.actions{display:flex;gap:8px;flex-wrap:wrap}
+.primary,.secondary,.danger{border-radius:12px;padding:10px 14px;font-weight:800}.primary{background:#10233f;color:#fff;border:0}.secondary{background:#fff;border:1px solid #cfd8e4}.danger{background:#fff0f0;color:#b42318;border:1px solid #e0b5b5}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:8px 5px;border-bottom:1px solid #e5e7eb;text-align:center}th{background:#f3f6f9}
+.bottom{position:fixed;z-index:40;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #d9e0e8;display:grid;grid-template-columns:repeat(5,1fr);padding:5px 4px calc(5px + env(safe-area-inset-bottom));box-shadow:0 -3px 15px #0001}
+.nav{border:0;background:none;color:#667085;font-size:11px;font-weight:800}.nav span{display:block;font-size:21px}.nav.active{color:#087ef2}
+@media(min-width:700px){.record-layout{grid-template-columns:1fr 1.4fr .9fr}.context{grid-column:1/-1}.pitchgrid{grid-template-columns:repeat(3,1fr)}.outcomegrid{grid-template-columns:repeat(3,1fr)}.stats{grid-template-columns:repeat(4,1fr)}main{padding:22px}}
+@media(min-width:1100px){.record-layout{grid-template-columns:330px 1fr 330px}.context{grid-column:1/-1}}
+</style>
+</head>
+<body>
+<header><h1>⚾ 六郷高校 Baseball Analyzer</h1><p>V7｜iPhone・iPad・タブレット完全対応</p><p>試合記録モード｜1球入力・自動カウント・作戦分析</p></header>
+<main>
+<section id="game" class="page active">
+<div class="card"><h2>🏟️ 試合情報</h2><div class="grid">
+<div><label>試合名</label><input id="gameName" value="練習試合"></div><div><label>対戦校</label><input id="opponent" placeholder="対戦校"></div>
+<div><label>自チーム得点</label><input id="scoreUs" type="number" min="0" value="0"></div><div><label>相手得点</label><input id="scoreThem" type="number" min="0" value="0"></div>
+</div></div>
+<div class="card topbar"><div class="metric"><small>現在</small><b id="inningView">1回表</b></div><div class="metric"><small>アウト</small><b id="outView">0</b></div><div class="metric"><small>カウント</small><b id="countView">0-0</b></div><div class="metric"><small>打者</small><b id="batterView">選手1</b></div></div>
+<div class="record-layout">
+<div class="card context"><h2>🎯 状況</h2><div class="grid">
+<div><label>攻撃</label><select id="half"><option>表</option><option>裏</option></select></div><div><label>回</label><select id="inning"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option></select></div>
+<div><label>打者</label><input id="batter" value="選手1"></div><div><label>打順</label><select id="order"><option>1番</option><option>2番</option><option>3番</option><option>4番</option><option>5番</option><option>6番</option><option>7番</option><option>8番</option><option>9番</option></select></div>
+<div><label>走者</label><select id="runner"><option>なし</option><option>一塁</option><option>二塁</option><option>三塁</option><option>一・二塁</option><option>一・三塁</option><option>二・三塁</option><option>満塁</option></select></div><div><label>投手</label><select id="pitcher"><option>右</option><option>左</option></select></div>
+</div></div>
+<div class="card controls"><h2>⚾ 1球入力</h2><div class="pitchgrid">
+<button class="pitch" onclick="pitch('ストライク')">ストライク</button><button class="pitch" onclick="pitch('空振り')">空振り</button><button class="pitch" onclick="pitch('ボール')">ボール</button><button class="pitch" onclick="pitch('ファウル')">ファウル</button><button class="pitch" onclick="pitch('打球')">打球</button><button class="pitch" onclick="pitch('死球')">死球</button>
+</div><h3 style="margin-top:15px">打席結果</h3><div class="outcomegrid">
+<button class="outcome" onclick="plate('単打',1,1)">単打</button><button class="outcome" onclick="plate('二塁打',1,2)">二塁打</button><button class="outcome" onclick="plate('三塁打',1,3)">三塁打</button><button class="outcome" onclick="plate('本塁打',1,4)">本塁打</button><button class="outcome" onclick="plate('四球',0,0)">四球</button><button class="outcome" onclick="plate('三振',0,0)">三振</button><button class="outcome" onclick="plate('凡打',0,0)">凡打</button><button class="outcome" onclick="plate('犠打',0,0)">犠打</button>
+</div><div class="actions" style="margin-top:12px"><button class="secondary" onclick="undo()">↩ 1つ戻す</button><button class="secondary" onclick="nextBatter()">次打者 →</button></div><div id="live" class="live">LIVE：記録開始</div></div>
+<div class="card side"><h2>🎯 攻撃作戦</h2><div class="strategygrid">
+<button class="strategy" onclick="startStrategy('送りバント')">送りバント</button><button class="strategy" onclick="startStrategy('盗塁')">盗塁</button><button class="strategy" onclick="startStrategy('エンドラン')">エンドラン</button><button class="strategy" onclick="startStrategy('スクイズ')">スクイズ</button><button class="strategy" onclick="startStrategy('バスター')">バスター</button><button class="strategy" onclick="startStrategy('進塁打')">進塁打</button>
+</div><div id="strategyLive" class="live">作戦：未記録</div><h3 style="margin-top:15px">走塁</h3><div class="actions"><button class="secondary" onclick="eventLog('盗塁成功')">盗塁成功</button><button class="secondary" onclick="eventLog('盗塁失敗')">盗塁失敗</button><button class="secondary" onclick="eventLog('得点')">得点</button></div></div>
+</div></section>
+
+<section id="summary" class="page"><div class="card"><h2>📋 集計</h2><div class="stats">
+<div class="metric">打席<b id="sPA">0</b></div><div class="metric">安打<b id="sH">0</b></div><div class="metric">打率<b id="sAVG">.000</b></div><div class="metric">OPS<b id="sOPS">.000</b></div><div class="metric">連打率<b id="sStreak">0.0%</b></div><div class="metric">作戦成功率<b id="sSuccess">0.0%</b></div><div class="metric">得点<b id="sRuns">0</b></div><div class="metric">投球数<b id="sPitch">0</b></div>
+</div></div><div class="card"><h3>選手別</h3><table><thead><tr><th>選手</th><th>PA</th><th>H</th><th>AVG</th><th>OPS</th></tr></thead><tbody id="playerTable"></tbody></table></div><div class="card"><h3>作戦別</h3><table><thead><tr><th>作戦</th><th>実行</th><th>成功</th><th>成功率</th></tr></thead><tbody id="strategyTable"></tbody></table></div></section>
+
+<section id="stats" class="page"><div class="card"><h2>📊 統計</h2><div class="stats"><div class="metric">ストライク率<b id="strikeRate">0.0%</b></div><div class="metric">連打率<b id="tStreak">0.0%</b></div><div class="metric">作戦成功率<b id="tSuccess">0.0%</b></div><div class="metric">最多結果<b id="top">---</b></div></div></div><div class="card"><h3>打席結果</h3><table><thead><tr><th>結果</th><th>回数</th></tr></thead><tbody id="resultTable"></tbody></table></div><div class="card"><h3>試合ログ</h3><table><thead><tr><th>回</th><th>打者</th><th>内容</th></tr></thead><tbody id="logTable"></tbody></table></div></section>
+
+<section id="report" class="page"><div class="card"><h2>📄 試合レポート</h2><div class="notice" id="reportTitle">試合データ</div><table><tbody>
+<tr><th>対戦校</th><td id="rOpp">---</td></tr><tr><th>スコア</th><td id="rScore">0 - 0</td></tr><tr><th>打席</th><td id="rPA">0</td></tr><tr><th>安打</th><td id="rH">0</td></tr><tr><th>打率</th><td id="rAVG">.000</td></tr><tr><th>OPS</th><td id="rOPS">.000</td></tr><tr><th>連打率</th><td id="rStreak">0.0%</td></tr><tr><th>作戦成功率</th><td id="rSuccess">0.0%</td></tr>
+</tbody></table></div><div class="card"><button class="primary" onclick="window.print()">🖨 印刷 / PDF保存</button></div></section>
+
+<section id="settings" class="page"><div class="card"><h2>⚙️ 設定</h2><p>六郷高校 Baseball Analyzer V7</p><p>データはこの端末のブラウザに保存されます。</p><button class="danger" onclick="resetData()">全記録をリセット</button></div></section>
+</main>
+
+<nav class="bottom"><button class="nav active" onclick="show('game',this)"><span>⚾</span>試合</button><button class="nav" onclick="show('summary',this)"><span>📋</span>集計</button><button class="nav" onclick="show('stats',this)"><span>📊</span>統計</button><button class="nav" onclick="show('report',this)"><span>📄</span>レポート</button><button class="nav" onclick="show('settings',this)"><span>⚙️</span>設定</button></nav>
+
+<script>
+const KEY='rokugo_baseball_v7';
+let db=JSON.parse(localStorage.getItem(KEY)||'{"pitches":[],"plate":[],"strategies":[],"events":[],"runs":0,"outs":0,"strikes":0,"balls":0}');
+function $(id){return document.getElementById(id)}function save(){localStorage.setItem(KEY,JSON.stringify(db));update()}
+function ctx(){return{inning:$('inning').value,half:$('half').value,batter:$('batter').value||'選手1',order:$('order').value,runner:$('runner').value,pitcher:$('pitcher').value}}
+function pitch(type){let c=ctx();db.pitches.push({...c,type,strikes:db.strikes,balls:db.balls});if(type==='ストライク'||type==='空振り')db.strikes++;if(type==='ファウル'&&db.strikes<2)db.strikes++;if(type==='ボール')db.balls++;if(db.strikes>=3){db.plate.push({...c,result:'三振',hit:0,bases:0});db.strikes=0;db.balls=0}if(db.balls>=4){db.plate.push({...c,result:'四球',hit:0,bases:0});db.strikes=0;db.balls=0}$('live').textContent='LIVE：'+type+' → '+db.balls+'-'+db.strikes;save()}
+function plate(result,hit,bases){let c=ctx();db.plate.push({...c,result,hit,bases});db.strikes=0;db.balls=0;$('live').textContent='LIVE：'+c.batter+' → '+result;save()}
+function nextBatter(){db.strikes=0;db.balls=0;$('live').textContent='次打者へ：カウントをリセット';save()}
+function startStrategy(name){db.strategies.push({...ctx(),name,success:null});$('strategyLive').innerHTML='作戦：'+name+'　<button class="secondary" onclick="finishStrategy(true)">成功</button> <button class="secondary" onclick="finishStrategy(false)">失敗</button>';save()}
+function finishStrategy(ok){if(db.strategies.length){db.strategies[db.strategies.length-1].success=ok;$('strategyLive').textContent='作戦：'+(ok?'成功':'失敗');save()}}
+function eventLog(type){db.events.push({...ctx(),type});if(type==='得点')db.runs=(db.runs||0)+1;$('live').textContent='LIVE：'+type;save()}
+function undo(){if(db.plate.length)db.plate.pop();else if(db.pitches.length)db.pitches.pop();db.strikes=0;db.balls=0;$('live').textContent='直前の記録を1つ戻しました';save()}
+function show(id,b){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));$(id).classList.add('active');document.querySelectorAll('.nav').forEach(x=>x.classList.remove('active'));b.classList.add('active');scrollTo(0,0);update()}
+function fmt(n){return n.toFixed(3).replace(/^0/,'')}function pct(a,b){return b?(a/b*100).toFixed(1)+'%':'0.0%'}
+function update(){let p=db.plate,pa=p.length,h=p.filter(x=>x.hit).length,ab=p.filter(x=>!['四球','死球'].includes(x.result)).length,bb=p.filter(x=>['四球','死球'].includes(x.result)).length,avg=ab?h/ab:0,obp=pa?(h+bb)/pa:0,bases=p.reduce((s,x)=>s+(x.bases||0),0),slg=ab?bases/ab:0,ops=obp+slg,rr=0;for(let i=1;i<p.length;i++)if(p[i-1].hit&&p[i].hit)rr++;let known=db.strategies.filter(x=>x.success!==null),succ=known.filter(x=>x.success).length;
+$('inningView').textContent=$('inning').value+'回'+$('half').value;$('outView').textContent=db.outs;$('countView').textContent=db.balls+'-'+db.strikes;$('batterView').textContent=$('batter').value||'選手1';
+$('sPA').textContent=pa;$('sH').textContent=h;$('sAVG').textContent=fmt(avg);$('sOPS').textContent=fmt(ops);$('sStreak').textContent=pct(rr,Math.max(0,p.length-1));$('sSuccess').textContent=pct(succ,known.length);$('sRuns').textContent=db.runs||0;$('sPitch').textContent=db.pitches.length;
+$('strikeRate').textContent=pct(db.pitches.filter(x=>['ストライク','空振り','ファウル'].includes(x.type)).length,db.pitches.length);$('tStreak').textContent=pct(rr,Math.max(0,p.length-1));$('tSuccess').textContent=pct(succ,known.length);
+let counts={};p.forEach(x=>counts[x.result]=(counts[x.result]||0)+1);let top=Object.entries(counts).sort((a,b)=>b[1]-a[1])[0];$('top').textContent=top?top[0]:'---';$('resultTable').innerHTML=Object.entries(counts).map(x=>'<tr><td>'+x[0]+'</td><td>'+x[1]+'</td></tr>').join('')||'<tr><td colspan="2">記録なし</td></tr>';
+let players={};p.forEach(x=>(players[x.batter]??=[]).push(x));$('playerTable').innerHTML=Object.entries(players).map(([n,a])=>{let hh=a.filter(z=>z.hit).length,aa=a.filter(z=>!['四球','死球'].includes(z.result)).length,w=a.filter(z=>['四球','死球'].includes(z.result)).length,b=a.reduce((s,z)=>s+(z.bases||0),0),o=a.length?(hh+w)/a.length:0,s=aa?b/aa:0;return '<tr><td>'+n+'</td><td>'+a.length+'</td><td>'+hh+'</td><td>'+fmt(aa?hh/aa:0)+'</td><td>'+fmt(o+s)+'</td></tr>'}).join('')||'<tr><td colspan="5">記録なし</td></tr>';
+let sc={};db.strategies.forEach(z=>{if(!sc[z.name])sc[z.name]={n:0,s:0};sc[z.name].n++;if(z.success===true)sc[z.name].s++});$('strategyTable').innerHTML=Object.entries(sc).map(([n,z])=>'<tr><td>'+n+'</td><td>'+z.n+'</td><td>'+z.s+'</td><td>'+pct(z.s,z.n)+'</td></tr>').join('')||'<tr><td colspan="4">記録なし</td></tr>';
+$('logTable').innerHTML=[...db.pitches.map(z=>({i:z.inning,b:z.batter,t:z.type})),...p.map(z=>({i:z.inning,b:z.batter,t:z.result}))].slice(-40).reverse().map(z=>'<tr><td>'+z.i+'回</td><td>'+z.b+'</td><td>'+z.t+'</td></tr>').join('')||'<tr><td colspan="3">記録なし</td></tr>';
+$('reportTitle').textContent=$('gameName').value;$('rOpp').textContent=$('opponent').value||'---';$('rScore').textContent=($('scoreUs').value||0)+' - '+($('scoreThem').value||0);$('rPA').textContent=pa;$('rH').textContent=h;$('rAVG').textContent=fmt(avg);$('rOPS').textContent=fmt(ops);$('rStreak').textContent=pct(rr,Math.max(0,p.length-1));$('rSuccess').textContent=pct(succ,known.length)}
+function resetData(){if(confirm('V7の全記録を削除しますか？')){db={pitches:[],plate:[],strategies:[],events:[],runs:0,outs:0,strikes:0,balls:0};save()}}
+['gameName','opponent','scoreUs','scoreThem','half','inning','batter','order','runner','pitcher'].forEach(id=>$(id).addEventListener('input',update));update();
+</script>
+</body></html>
